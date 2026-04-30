@@ -29,41 +29,89 @@ scripts/objects/*.lua    One file per scripted object, named {GUID}_{slug}.lua.
 ui/global.xml            Global XmlUI (extracted from the JSON).
 tools/extract.py         Pull scripts/UI out of the JSON into source files.
 tools/inject.py          Push scripts/UI back into the JSON.
+vendor/                  Patched VS Code extension and other vendored deps.
 ```
 
 The `.lua` and `.xml` files are the readable source of truth. The JSON is the
 build artifact TTS actually loads. Both are committed so the mod is loadable
 straight from a clone.
 
-## Workflow
+## Setup (macOS)
 
-### One-time setup (macOS)
+### 1. Clone
 
 ```bash
-# Clone the repo
 git clone git@github.com:YOUR_USERNAME/riftbound-tcg-tts.git
 cd riftbound-tcg-tts
-
-# Symlink the save into TTS so editing in the repo is editing in TTS
-ln -s "$(pwd)/mod/Riftbound.json" ~/Library/Tabletop\ Simulator/Saves/Riftbound.json
 ```
 
-Install the [Tabletop Simulator Lua](https://marketplace.visualstudio.com/items?itemName=rolandostar.tabletopsimulator-lua)
-VS Code extension. Configure it to use this repo's `scripts/` folder.
+### 2. Symlink the save into TTS
+
+This makes editing in the repo equivalent to editing the save TTS loads.
+
+```bash
+ln -s "$(pwd)/mod/Riftbound.json" "$HOME/Library/Tabletop Simulator/Saves/Riftbound.json"
+```
+
+In TTS: Create → Singleplayer → Save & Load → **Saves** tab → Riftbound. The
+table should load identically to the original workshop mod.
+
+### 3. Install the patched VS Code extension
+
+The marketplace build of rolandostar's "Tabletop Simulator Lua" extension is
+broken on recent VS Code versions. A patched `.vsix` is vendored in this repo
+at `vendor/Tabletop Simulator Lua 1.1.3 Patched.vsix`.
+
+If you have an old/broken version installed, uninstall it cleanly first:
+
+```bash
+# In VS Code: Extensions panel → Tabletop Simulator Lua → cog → Uninstall
+# Then quit VS Code (Cmd+Q), and clear any leftover extension dir:
+rm -rf ~/.vscode/extensions/rolandostar.tabletopsimulator-lua-*
+```
+
+Install the patched build:
+
+```bash
+code --install-extension "vendor/Tabletop Simulator Lua 1.1.3 Patched.vsix"
+```
+
+If `code` isn't on your PATH, install via the UI instead: `Cmd+Shift+P` →
+"Extensions: Install from VSIX..." → pick `vendor/Tabletop Simulator Lua 1.1.3 Patched.vsix`.
+
+Reopen VS Code, open this repo, then open `scripts/global.lua` to activate the
+extension.
+
+### 4. Verify the dev loop
+
+1. Launch TTS, load the Riftbound save.
+2. In VS Code: `Cmd+Shift+P` → **Tabletop Simulator: Get Lua Scripts**.
+3. The extension dumps scripts into `~/Documents/Tabletop Simulator/` and
+   opens them. From there, edit and use **Tabletop Simulator: Save And Play**
+   to push changes back into the live game.
+
+> **Note on script location.** The rolandostar extension dumps scripts into
+> `~/Documents/Tabletop Simulator/`, not into this repo. Day-to-day editing
+> happens there. When you save the mod in TTS itself (via the in-game save
+> menu), the JSON in `mod/Riftbound.json` updates via the symlink — and you
+> can run `python3 tools/extract.py` to regenerate the readable `.lua` files
+> in `scripts/` for committing.
+
+## Workflow
 
 ### Edit / test cycle
 
-1. Launch TTS, load the Riftbound save (Save & Load → Saves).
-2. In VS Code, `Cmd+Shift+P` → **Tabletop Simulator: Get Lua Scripts**.
-   This pulls the current state of the mod out of the running game.
-3. Edit `.lua` files in VS Code.
-4. `Cmd+Shift+P` → **Tabletop Simulator: Save And Play**. TTS reloads with the changes.
-5. When happy, save in TTS (this updates `mod/Riftbound.json`). Commit both
-   the JSON and the changed `.lua` files.
+1. Launch TTS, load the Riftbound save.
+2. `Cmd+Shift+P` → **Tabletop Simulator: Get Lua Scripts** (pulls from the running game).
+3. Edit the scripts the extension opened.
+4. `Cmd+Shift+P` → **Tabletop Simulator: Save And Play** (pushes back, TTS reloads).
+5. When happy, save the mod in TTS itself — this writes the JSON via the symlink.
+6. Run `python3 tools/extract.py` to refresh `scripts/*.lua` from the new JSON.
+7. `git diff` to review, then commit both the JSON and the regenerated scripts.
 
 ### Rebuilding the JSON manually
 
-If the JSON gets out of sync with the source files (or for CI):
+If the JSON ever drifts from the source files (or for CI):
 
 ```bash
 python3 tools/inject.py
