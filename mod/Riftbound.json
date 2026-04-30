@@ -1,9 +1,9 @@
 {
-  "SaveName": "MTG 4 player table - scripted",
+  "SaveName": "Riftbound 4 player table",
   "EpochTime": 1773624255,
   "Date": "3/15/2026 9:24:15 PM",
   "VersionNumber": "v14.2.1",
-  "GameMode": "MTG EDH 4-player (π)",
+  "GameMode": "Riftbound 4-player Free-for-All.",
   "GameType": "Game",
   "GameComplexity": "Low Complexity",
   "PlayingTime": [
@@ -20,11 +20,9 @@
     "Scripting: Automated",
     "Cards",
     "Scripting",
-    "MTG",
-    "Magic the Gathering",
-    "Magic",
-    "EDH",
-    "Commander"
+    "Riftbound",
+    "League of Legends",
+    "Riot Games"
   ],
   "Gravity": 1.0,
   "PlayArea": 0.2,
