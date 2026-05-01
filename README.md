@@ -18,6 +18,12 @@ scripted infrastructure in this repo is mine in origin:
 - **rikrassen** — MTG Deck/Draft/Cube Importer
 - Encoder API author (unattributed in source — happy to credit if identified)
 
+Additional attribution for reused assets:
+
+- A small subset of visual assets in this fork (notably some card back art variants)
+  is adapted from a community Tabletop Simulator Workshop mod. Full credit remains
+  with the original Workshop author(s).
+
 If you're one of the above and want changes to attribution or licensing here, open an issue.
 
 ## Repo layout

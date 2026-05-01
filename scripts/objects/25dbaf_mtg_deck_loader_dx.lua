@@ -1,22 +1,16 @@
 --[[
-"MTG Deck Loader DX" by DXHHH101
-Originally written by Omes (https://steamcommunity.com/sharedfiles/filedetails/?id=2163084841)
-Credit to Amuzet as well for ideas taken from their importer.
+"Riftbound Deck Loader"
+Originally based on "MTG Deck Loader DX" by DXHHH101
+(https://github.com/DXHHH101/TabletopSimulatorScripts/tree/main/MTGImporter)
+Credit to Omes and Amuzet for the original importer architecture.
 
-This is my approach to a rewrite/recycling of Omes' code to comply with Scryfall's API rules.
-This is just the "playmat" to actually import the decks onto, the "MTG Importer DX" module is
-required for this to function properly.
+The playmat that imports Riftbound decks. Requires "Riftbound Card Importer"
+(80c03d) to be present on the table.
 
-Feel free to contribute if you spot a bug or something to improve!
-https://github.com/DXHHH101/TabletopSimulatorScripts/tree/main/MTGImporter
+Supported import sources:
+ - piltoverarchive.com  (URL import)
+ - Player Notebook      (manual decklist)
 ]]
-
--- ============================================================================
--- Variables GITHUB AUTO-UPDATE
--- ============================================================================
-local ScriptVersion = "1.0.0"
---pi local ScriptClass = 'MTGImporter.DeckloaderMat'
---pi local checkUpdateTimeout = 1
 
 -- ============================================================================
 -- UI CONSTANTS / UI IDS
@@ -24,1477 +18,865 @@ local ScriptVersion = "1.0.0"
 local UI_ADVANCED_PANEL = "MTGDeckLoaderAdvancedPanel"
 
 -- ============================================================================
--- RUNTIME STATE (GLOBAL STATE)
+-- RUNTIME STATE
 -- ============================================================================
 local playerColor = nil
 
---UI Toggles
-local advanced = false
-local cardBackInput = ""
-local blowCache = false
-local pngGraphics = false
+local advanced              = false
+local cardBackInput         = ""
 local spawnEverythingFaceDown = false
-local skipMaybeboard = false
-local skipSideboard = false
-local skipTokens = false
+local skipSideboard         = false
 
-local pendingDeckSpawns = 0 --used to figure out when all the decks have been fully spawned
-
+local pendingDeckSpawns = 0
 
 -- ============================================================================
--- CONSTANTS (URLS, TYPES, OFFSETS, DEFAULTS)
+-- CONSTANTS (URLS, POSITIONS, CARD BACKS)
 -- ============================================================================
-local TAPPEDOUT_BASE_URL = "https://tappedout.net/mtg-decks/"
-local TAPPEDOUT_URL_SUFFIX = "/"
-local TAPPEDOUT_URL_MATCH = "tappedout%.net"
+local PILTOVERARCHIVE_API_BASE  = "https://piltoverarchive.com"
+local PILTOVERARCHIVE_URL_MATCH = "piltoverarchive%.com"
 
-local ARCHIDEKT_BASE_URL = "https://archidekt.com/api/decks/"
-local ARCHIDEKT_URL_SUFFIX = "/?format=json" -- This used to be "/small/?format=json", which loaded faster, but that endpoint doesn't work properly as of 2024-05.
-local ARCHIDEKT_URL_MATCH = "archidekt%.com"
+-- Grid layout  (x=1.25=left, x=-1.25=right, z=-1.010=top, z=0.145=bottom)
+-- Top row:    Sideboard | Battlefields | Tokens
+-- Bottom row: Legend + Champion (stacked) | Runes | Maindeck
+local SIDEBOARD_POSITION_OFFSET   = { 1.25, 0.1, -1.010}
+local BATTLEFIELD_POSITION_OFFSET = { 0.0,  0.1, -1.010}
+local TOKEN_POSITION_OFFSET       = {-1.25, 0.1, -1.010}
+local LEGEND_POSITION_OFFSET      = { 1.25, 0.1,  0.145}
+local CHAMPION_POSITION_OFFSET    = { 1.25, 0.1,  0.145}  -- same as legend → stacked
+local RUNE_POSITION_OFFSET        = { 0.0,  0.1,  0.145}
+local MAINDECK_POSITION_OFFSET    = {-1.25, 0.1,  0.145}
 
-local GOLDFISH_URL_MATCH = "mtggoldfish%.com"
+local CARD_BACK_NORMAL      = "https://steamusercontent-a.akamaihd.net/ugc/17923936841557333394/E61E2190D4439BC190F2B572BBD6D36C0B487565/"
+local CARD_BACK_LEGEND      = "https://steamusercontent-a.akamaihd.net/ugc/10828317924251492828/9B8428F7932F27440F9332D8E8D9103A6EA3C155/"
+local CARD_BACK_RUNE        = "https://steamusercontent-a.akamaihd.net/ugc/9393316991583067772/10DEFFBA73258C75462E90EA5ACA4DC95176590C/"
+-- Battlefield cards spawn rotated 90° Y so the landscape front looks correct.
+-- The back image must also be landscape (pre-rotated 90°) to appear portrait when flipped.
+-- Replace with a URL that hosts a 90°-rotated version of the normal card back.
+local CARD_BACK_BATTLEFIELD = "https://steamusercontent-a.akamaihd.net/ugc/10194552971616474255/FB2A81006CA8DE6E7E2191374D0AB9D56A19D1F4/"
 
-local MOXFIELD_BASE_URL = "https://api2.moxfield.com/v2/decks/all/"
-local MOXFIELD_URL_SUFFIX = "/"
-local MOXFIELD_URL_MATCH = "moxfield%.com"
-
-local DECKSTATS_URL_SUFFIX = "?export_mtgarena=1"
-local DECKSTATS_URL_MATCH = "deckstats%.net"
-
-local SCRYFALL_ID_BASE_URL = "https://api.scryfall.com/cards/"
-local SCRYFALL_MULTIVERSE_BASE_URL = "https://api.scryfall.com/cards/multiverse/"
-local SCRYFALL_SET_NUM_BASE_URL = "https://api.scryfall.com/cards/"
-local SCRYFALL_SEARCH_BASE_URL = "https://api.scryfall.com/cards/search/?q="
-local SCRYFALL_NAME_BASE_URL = "https://api.scryfall.com/cards/named/?exact="
-
-local MAINDECK_POSITION_OFFSET = {0.0, 0.1, 0.145}
-local COMMANDER_POSITION_OFFSET = {1.25, 0.1, 0.145}
-local TOKEN_POSITION_OFFSET = {-1.25, 0.1, 0.145}
-local MAYBEBOARD_POSITION_OFFSET = {0.625, 0.1, -1.01}
-local SIDEBOARD_POSITION_OFFSET = {-0.625, 0.1, -1.01}
-
-local ERROR_MESSAGE_DECKLOADER = "Deck Loader DX Error: "
+local ERROR_MESSAGE_DECKLOADER = "Riftbound Deck Loader Error: "
 
 -- ============================================================================
 -- ERROR / LOGGING HELPERS
 -- ============================================================================
-local function printError(string, pc) --if no color is given, prints to all
-    if pc then
-        printToColor(string, pc, {r=1, g=0, b=0})
-    else
-        printToAll(string, {r=1, g=0, b=0})
-    end
-    lockSelf(false)
+local function printError(str, pc)
+	if pc then
+		printToColor(str, pc, {r=1, g=0, b=0})
+	else
+		printToAll(str, {r=1, g=0, b=0})
+	end
+	lockSelf(false)
 end
 
-local function printInfo(string, pc)
-    if pc then
-        printToColor(string, pc)
-    else
-        printToAll(string)
-    end
+local function printInfo(str, pc)
+	if pc then
+		printToColor(str, pc)
+	else
+		printToAll(str)
+	end
 end
 
---pi -- ============================================================================
--- -- GITHUB AUTO-UPDATE
--- -- ============================================================================
--- --(originally written by ThatRobHuman, heavily modified by DXHHH101)
--- local function isNewerVersion(r,l)
---     local a,b,c = r:match("(%d+)%.(%d+)%.(%d+)")
---     local x,y,z = l:match("(%d+)%.(%d+)%.(%d+)")
---     a,b,c,x,y,z = tonumber(a),tonumber(b),tonumber(c),tonumber(x),tonumber(y),tonumber(z)
---     return a>x or (a==x and (b>y or (b==y and c>z)))
--- end
-
--- local function installUpdate(newVersion)
--- 	print('[33ff33]Installing Upgrade to MTG Deck Loader DX ['..tostring(newVersion)..']')
--- 	WebRequest.get('https://raw.githubusercontent.com/DXHHH101/TabletopSimulatorScripts/refs/heads/main/MTGImporter/DeckloaderMat.lua' .. "?t=" .. tostring(os.time()), function(res)
---         if (not(res.is_error)) then
---             local state = {}
-
---             if self.script_state ~= "" then
---                 state = JSON.decode(self.script_state)
---             end
-
---             state.updatedTo = newVersion
-
---             self.script_state = JSON.encode(state)
-
---             self.script_code = res.text
---             self.reload()
---             print('[33ff33]Installation Successful[-]')
---         else
---             error(res)
---         end
---     end)
--- end
-
--- local function checkForUpdates()
---     if Global.getVar("DXMTGScriptVersions_fetchFailed") then
---         error("Remote version check previously failed.")
---         self.setVar("updateFinished", "kill") --used for the infinite bag object
---         return
---     end
-
-
---     if Global.getVar("DXMTGScriptVersions_isFetching") then
---         if checkUpdateTimeout <= 5 then
---             Wait.time(checkForUpdates, 1)
---             checkUpdateTimeout = checkUpdateTimeout + 1
---             return
---         else 
---             error("Failed to check for DX MTG Script updates.")
---         end
---     else
---         local allRemoteVersions = Global.getTable("DXMTGScriptVersions")
---         if not allRemoteVersions then
---             Global.setVar("DXMTGScriptVersions_isFetching", true)
---             WebRequest.get('https://raw.githubusercontent.com/DXHHH101/TabletopSimulatorScripts/refs/heads/main/ScriptVersions.json' .. "?t=" .. tostring(os.time()), function(res)
---                 if (not(res.is_error)) then
---                     local response = JSON.decode(res.text)
---                     Global.setTable("DXMTGScriptVersions", response)
---                     Global.setVar("DXMTGScriptVersions_isFetching", false)
-
---                     local remoteVersion = response[ScriptClass]
---                     if not remoteVersion then
---                         error("Remote version not found for " .. ScriptClass)
---                     elseif isNewerVersion(remoteVersion, ScriptVersion) then
---                         installUpdate(remoteVersion)
---                     end
---                 else
---                     Global.setVar("DXMTGScriptVersions_fetchFailed", true)
---                     Global.setVar("DXMTGScriptVersions_isFetching", false)
---                     error(res)
---                     self.setVar("updateFinished", "kill") --used for the infinite bag object
---                 end
---             end)
---             return
---         else
---             local remoteVersion = allRemoteVersions[ScriptClass]
---             if not remoteVersion then
---                 error("Remote version not found for " .. ScriptClass)
---             elseif isNewerVersion(remoteVersion, ScriptVersion) then
---                 installUpdate(remoteVersion)
---                 return
---             end
---         end
---     end
---     self.setVar("updateFinished", "kill") --used for the infinite bag object
--- end
-
--- local function checkCurrentVersion(script_state)
---     local state = {}
---     if script_state ~= "" then
---         state = JSON.decode(script_state) or {}
---     end
---     --Will skip an update check once when the object is reloaded after updating
---     if state.updatedTo ~= ScriptVersion then
---         checkForUpdates()
---     else
---         state.updatedTo = nil
---         self.script_state = JSON.encode(state)
---         self.setVar("updateFinished", true) --used for the infinite bag object
---     end
--- end
-
--- function getScriptVersion()
---     return ScriptVersion
--- end
--- Global.getVar('Encoder')
-
 -- ============================================================================
--- CONFIG / MODULE DEPENDENCIES
+-- MODULE DEPENDENCY
 -- ============================================================================
-local MTGImporterDX = nil
+local RiftboundImporter = nil
 
-local function getMTGImporterDX() --Try to find and return the importer module
-    MTGImporterDX = Global.getVar("MTGImporterDX")
-    if MTGImporterDX then
-        return true
-    else
-        printError(ERROR_MESSAGE_DECKLOADER .. 'Missing "MTG Importer DX"', playerColor)
-        return false
-    end
+local function getRiftboundImporter()
+	RiftboundImporter = Global.getVar("RiftboundImporter")
+	if RiftboundImporter then
+		return true
+	else
+		printError(ERROR_MESSAGE_DECKLOADER .. 'Missing "Riftbound Card Importer"', playerColor)
+		return false
+	end
 end
 
 -- ============================================================================
 -- LOCKING / UNLOCKING
 -- ============================================================================
 function lockSelf(state)
-    self.setLock(state)
+	self.setLock(state)
 end
 
 local function lockImporter(state)
-    if not getMTGImporterDX() then
-        -- Importer module wasn't found, stop working
-        return
-    end
-    MTGImporterDX.call("lockImporter", state)
+	if not getRiftboundImporter() then return end
+	RiftboundImporter.call("lockImporter", state)
 end
 
 -- ============================================================================
 -- BASIC UTILITIES
 -- ============================================================================
 local function trim(s)
-    if not s then return "" end
-
-    local n = s:find"%S"
-    return n and s:match(".*%S", n) or ""
-end
-
-local function valInTable(table, v)
-    for _, value in ipairs(table) do
-        if value == v then
-            return true
-        end
-    end
-
-    return false
+	if not s then return "" end
+	local n = s:find("%S")
+	return n and s:match(".*%S", n) or ""
 end
 
 local function stringToBool(s)
-    -- It is truly ridiculous that this needs to exist.
-    return (string.lower(s) == "true")
+	return (string.lower(s) == "true")
 end
 
 local function iterateLines(s)
-    if not s or string.len(s) == 0 then
-        return ipairs({})
-    end
-
-    if s:sub(-1) ~= '\n' then
-        s = s .. '\n'
-    end
-
-    local pos = 1
-    return function ()
-        if not pos then return nil end
-
-        local p1, p2 = s:find("\r?\n", pos)
-
-        local line
-        if p1 then
-            line = s:sub(pos, p1 - 1)
-            pos = p2 + 1
-        else
-            line = s:sub(pos)
-            pos = nil
-        end
-
-        return line
-    end
+	if not s or string.len(s) == 0 then
+		return ipairs({})
+	end
+	if s:sub(-1) ~= '\n' then
+		s = s .. '\n'
+	end
+	local pos = 1
+	return function()
+		if not pos then return nil end
+		local p1, p2 = s:find("\r?\n", pos)
+		local line
+		if p1 then
+			line = s:sub(pos, p1 - 1)
+			pos = p2 + 1
+		else
+			line = s:sub(pos)
+			pos = nil
+		end
+		return line
+	end
 end
 
 -- ============================================================================
--- SPAWNING (DECK/TOKEN OBJECT CREATION)
+-- RIFTSEER CARD DATA → TTS ENTRY
 -- ============================================================================
+local function riftCardToEntry(card, qty)
+	-- Build TTS card entry from a Riftseer resolved card object.
+	local name = card.name or (card.text and card.text.name) or "Unknown"
+
+	local typeStr = ""
+	if card.classification then
+		local parts = {}
+		if card.classification.supertype and card.classification.supertype ~= "" then
+			parts[#parts+1] = card.classification.supertype
+		end
+		if card.classification.type and card.classification.type ~= "" then
+			parts[#parts+1] = card.classification.type
+		end
+		typeStr = table.concat(parts, " ")
+	end
+
+	local desc = ""
+	if card.text and card.text.plain and card.text.plain ~= "" then
+		desc = card.text.plain
+	end
+
+	if card.attributes then
+		local attrs = card.attributes
+		local statParts = {}
+		if attrs.energy  then statParts[#statParts+1] = "Energy: " .. tostring(attrs.energy)  end
+		if attrs.might   then statParts[#statParts+1] = "Might: "  .. tostring(attrs.might)   end
+		if attrs.power   then statParts[#statParts+1] = "[b]"      .. tostring(attrs.power) .. "[/b]" end
+		if #statParts > 0 then
+			if desc ~= "" then desc = desc .. "\n" end
+			desc = desc .. table.concat(statParts, " | ")
+		end
+	end
+
+	local imageURL = nil
+	if card.media and card.media.media_urls then
+		imageURL = card.media.media_urls.normal
+	end
+
+	local nickname = name
+	if typeStr ~= "" then
+		nickname = name .. "\n" .. typeStr
+	end
+
+	return {
+		name             = nickname,
+		description      = desc,
+		imageURL         = imageURL,
+		relatedPrintings = card.related_printings or {},
+		qty              = qty or 1,
+	}
+end
+
+-- ============================================================================
+-- SPAWNING
+-- ============================================================================
+local RIFTSEER_API_BASE = "https://api.riftseer.com"
+
 local function spawnDeckIfAny(decklist, options)
-    -- decklist is this: { {card=..., qty=...}, ... }
-    if not decklist or #decklist == 0 then return nil end
+	if not decklist or #decklist == 0 then return nil end
+	if not getRiftboundImporter() then return end
 
-    local bundledData = {
-        decklistArray = decklist,
-        cacheBuster = blowCache,
-        isPNGImage = pngGraphics,
-        playerColor = playerColor
-    }
-    local cardBack = getCardBack()
-    if cardBack ~= nil then
-        bundledData.cardBack = cardBack
-    end
+	local rotation = self.getRotation()
+	rotation.z = options.isFlipped and 180 or 0
+	if options.rotatePortrait then
+		rotation.y = rotation.y + 90
+	end
 
-    if not getMTGImporterDX() then
-        -- Importer module wasn't found, stop working
-        return
-    end
+	local tempPosition = {
+		x = options.position.x,
+		y = options.position.y + 1000,
+		z = options.position.z,
+	}
 
-    local deckData = MTGImporterDX.call("createDeckObject", bundledData)
-    if not deckData then
-        printError(ERROR_MESSAGE_DECKLOADER .. "createDeckObject returned nil", playerColor)
-        return nil
-    end
+	local function calcNewPosition(deckObj, oldPosition)
+		local cardCount = 1
+		if deckObj.tag == "Deck" and deckObj.getObjects then
+			local objs = deckObj.getObjects()
+			if objs then
+				cardCount = #objs
+				if cardCount > 213 then cardCount = 213 end
+			end
+		end
+		local CARD_THICKNESS = 0.01
+		local estimatedThickness = cardCount * CARD_THICKNESS
+		return {
+			x = oldPosition.x,
+			y = oldPosition.y + (estimatedThickness / 2),
+			z = oldPosition.z,
+		}
+	end
 
-    local rotation = self.getRotation()
-    rotation.z = options.isFlipped and 180 or 0
+	local function completedDeckSpawn()
+		pendingDeckSpawns = pendingDeckSpawns - 1
+		if pendingDeckSpawns <= 0 then
+			printInfo("Deck successfully imported!", playerColor)
+			lockSelf(false)
+		end
+	end
 
-    --set name if it exists (only if there's more than 1, otherwise it would set the card name)
-    if deckData.ContainedObjects and #deckData.ContainedObjects > 1 then
-        deckData.Nickname = options.deckName or ""
+	local function doSpawn(validatedDecklist)
+		local function nonEmpty(s) return (s and s ~= "") and s or nil end
+		local bundledData = {
+			decklistArray = validatedDecklist,
+			cardBack      = nonEmpty(getCardBack()) or nonEmpty(options.cardBack) or CARD_BACK_NORMAL,
+		}
 
-    end
+		local deckData = RiftboundImporter.call("createDeckObject", bundledData)
+		if not deckData then
+			printError(ERROR_MESSAGE_DECKLOADER .. "createDeckObject returned nil", playerColor)
+			completedDeckSpawn()
+			return
+		end
 
-    local function calcNewPosition(deckObj, oldPosition)
+		if deckData.ContainedObjects and #deckData.ContainedObjects > 1 then
+			deckData.Nickname = options.deckName or ""
+		end
 
-        local cardCount = 1
+		spawnObjectData({
+			data     = deckData,
+			position = tempPosition,
+			rotation = rotation,
+			callback_function = function(obj)
+				obj.setPosition(calcNewPosition(obj, options.position))
+				if options.scale then obj.setScale(options.scale) end
+				if options.onSpawn then options.onSpawn(obj) end
+				completedDeckSpawn()
+			end,
+		})
+	end
 
-        if deckObj.tag == "Deck" and deckObj.getObjects then
-            local objs = deckObj.getObjects()
-            if objs then
-                cardCount = #objs
-                if cardCount > 213 then
-                    cardCount = 213 --physical deck height seems to cap out here
-                end
-            end
-        end
+	-- For a card whose main image URL is unreachable, walk its related_printings
+	-- sequentially until we find one with a live image URL.
+	local function fetchPrintingFallback(entry, callback)
+		local printings = entry.relatedPrintings or {}
+		local i = 1
+		local function tryNext()
+			if i > #printings then callback(nil) return end
+			local uri = printings[i].uri
+			i = i + 1
+			if not uri then tryNext() return end
+			WebRequest.get(RIFTSEER_API_BASE .. uri, function(resp)
+				if resp.response_code ~= 200 then tryNext() return end
+				local ok, data = pcall(function() return json.decode(resp.text) end)
+				if not ok or not data then tryNext() return end
+				local imgURL = data.media and data.media.media_urls and data.media.media_urls.normal
+				if not imgURL then tryNext() return end
+				WebRequest.get(imgURL, function(imgResp)
+					if imgResp.response_code == 200 then
+						callback(imgURL)
+					else
+						tryNext()
+					end
+				end)
+			end)
+		end
+		tryNext()
+	end
 
-        local CARD_THICKNESS = 0.01
-        local estimatedThickness = cardCount * CARD_THICKNESS
+	-- Phase 1: HEAD-check each unique image URL concurrently.
+	-- Phase 2: for any that fail, try the card's related printings.
+	-- Spawn only once all URLs are resolved.
+	local uniqueURLs = {}
+	local seen = {}
+	for _, entry in ipairs(decklist) do
+		local url = entry.imageURL
+		if url and url ~= "" and not seen[url] then
+			seen[url] = true
+			uniqueURLs[#uniqueURLs+1] = url
+		end
+	end
 
-        local newPosition = {
-            x = oldPosition.x,
-            y = oldPosition.y + (estimatedThickness / 2),
-            z = oldPosition.z
-        }
-        return newPosition
-    end
+	if #uniqueURLs == 0 then
+		doSpawn(decklist)
+		return
+	end
 
+	local resolvedURLs = {}  -- original imageURL -> final URL (nil = use card back)
+	local remaining = #uniqueURLs
 
-    local function completedDeckSpawn()
-        pendingDeckSpawns = pendingDeckSpawns - 1
-        if pendingDeckSpawns <= 0 then
-            printInfo("Deck successfully imported!", playerColor)
-            lockSelf(false)
-        end
-    end
+	local function onAllResolved()
+		local validatedDecklist = {}
+		for _, entry in ipairs(decklist) do
+			validatedDecklist[#validatedDecklist+1] = {
+				name        = entry.name,
+				description = entry.description,
+				imageURL    = entry.imageURL and resolvedURLs[entry.imageURL] or nil,
+				qty         = entry.qty,
+			}
+		end
+		doSpawn(validatedDecklist)
+	end
 
-    local tempPosition = {
-        x = options.position.x,
-        y = options.position.y + 1000,
-        z = options.position.z
-    }
-
-    return spawnObjectData({
-        data = deckData,
-        position = tempPosition,
-        rotation = rotation,
-        callback_function = function(obj)
-            obj.setPosition(calcNewPosition(obj, options.position))
-
-
-            if (options.onSpawn) then
-                options.onSpawn(obj)
-            end
-
-            completedDeckSpawn()
-        end
-    })
+	for _, url in ipairs(uniqueURLs) do
+		WebRequest.get(url, function(resp)
+			if resp.response_code == 200 then
+				resolvedURLs[url] = url
+				remaining = remaining - 1
+				if remaining == 0 then onAllResolved() end
+			else
+				-- Find the first entry that uses this URL to try its printings.
+				local failedEntry = nil
+				for _, entry in ipairs(decklist) do
+					if entry.imageURL == url then
+						failedEntry = entry
+						break
+					end
+				end
+				if failedEntry and failedEntry.relatedPrintings and #failedEntry.relatedPrintings > 0 then
+					fetchPrintingFallback(failedEntry, function(fallbackURL)
+						resolvedURLs[url] = fallbackURL
+						remaining = remaining - 1
+						if remaining == 0 then onAllResolved() end
+					end)
+				else
+					resolvedURLs[url] = nil
+					remaining = remaining - 1
+					if remaining == 0 then onAllResolved() end
+				end
+			end
+		end)
+	end
 end
 
 -- ============================================================================
--- IMPORTER BRIDGE (CALLS MTGImporterDX, ALL SCRYFALL CALLS MADE HERE ONLY)
+-- RIFTSEER RESOLUTION BRIDGE
 -- ============================================================================
-local function loadDeckFromMainModule(cardMap, postLoadFunction, dataType, options)
+local function loadDeckFromMainModule(cardMap, callbackName, options)
+	if not options then options = {} end
 
-    --[[
-    dataType (What's built for scryfall):
-        "id"
-        "name"
+	-- Extract unique card names from the cardMap.
+	local uniqueNames = {}
+	for _, entry in pairs(cardMap) do
+		if entry.name then
+			uniqueNames[#uniqueNames+1] = entry.name
+		end
+	end
 
-    options (all optional):
-        deckName (string, defaults to "")
-    ]]
+	if not getRiftboundImporter() then return end
 
-    --if no options were passed just make an empty one to avoid an error
-    if not options then
-        options = {}
-    end
-
-    --Build data to send with callback functions
-    local bundledData = {
-        cardMap = cardMap,
-        dataType = dataType,
-        deckName = options.deckName or "",
-        needToFetchTokens = true,
-        playerColor = playerColor,
-        callerGUID = self.getGUID(),
-        onSuccess = postLoadFunction
-    }
-
-    if not getMTGImporterDX() then
-        -- Importer module wasn't found, stop working
-        return
-    end
-    MTGImporterDX.call("loadDeckFromScryfall", bundledData)
-
+	RiftboundImporter.call("loadDeckFromRiftseer", {
+		names       = uniqueNames,
+		callerGUID  = self.getGUID(),
+		onSuccess   = callbackName,
+		playerColor = playerColor,
+		passThroughData = {
+			cardMap  = cardMap,
+			deckName = options.deckName or "",
+		},
+	})
 end
 
+-- ============================================================================
+-- POST-LOAD CALLBACKS
+-- ============================================================================
+
+-- Callback for notebook import (Riftseer resolved from a name-keyed cardMap).
 function postDeckLoad(bundledData)
-    local importedDeck = bundledData.importedDeck or {}
-    local cardMap = bundledData.cardMap or {}
-    local deckName = bundledData.deckName or ""
-    local importedTokens = bundledData.importedTokens
+	local resolvedByName = bundledData.resolvedByName or {}
+	local passThrough    = bundledData.passThroughData or {}
+	local cardMap        = passThrough.cardMap  or {}
+	local deckName       = passThrough.deckName or ""
 
-    
+	local legendList, championList, battlefieldList = {}, {}, {}
+	local runeList, sideboardList, mainboardList    = {}, {}, {}
+	local shouldSpawnSideboard = not skipSideboard
 
-    -- decks
-    local commanderDeck, sideboardDeck, maybeboardDeck, mainboardDeck = {}, {}, {}, {}
+	for _, cardMapData in pairs(cardMap) do
+		local card = resolvedByName[cardMapData.name]
+		if not card then
+			printError(ERROR_MESSAGE_DECKLOADER .. "Card not found in Riftseer: " .. tostring(cardMapData.name), playerColor)
+		else
+			local function push(list, qtyField)
+				local qty = cardMapData[qtyField] or 0
+				if qty > 0 then
+					local entry = riftCardToEntry(card, qty)
+					if cardMapData.variantImageURL then
+						entry.imageURL         = cardMapData.variantImageURL
+						entry.relatedPrintings = {}
+					end
+					list[#list+1] = entry
+				end
+			end
+			push(legendList,      "legendQty")
+			push(championList,    "championQty")
+			push(battlefieldList, "battlefieldQty")
+			push(runeList,        "runeQty")
+			push(sideboardList,   "sideboardQty")
+			push(mainboardList,   "mainboardQty")
+		end
+	end
 
-    local getDeckByQtyField = {
-        commanderQty = commanderDeck,
-        sideboardQty = sideboardDeck,
-        maybeboardQty = maybeboardDeck,
-        mainboardQty = mainboardDeck,
-    }
+	pendingDeckSpawns = 0
+	local listsToSpawn = {legendList, championList, battlefieldList, runeList, mainboardList}
+	if shouldSpawnSideboard then
+		listsToSpawn[#listsToSpawn + 1] = sideboardList
+	end
+	for _, list in ipairs(listsToSpawn) do
+		if #list > 0 then pendingDeckSpawns = pendingDeckSpawns + 1 end
+	end
 
-    local function pushCardIntoDecks(cardMapData, card)
-        for qtyField, deck in pairs(getDeckByQtyField) do
-            local qty = cardMapData[qtyField]
-            if qty and qty ~= 0 then
-                deck[#deck + 1] = { card = card, qty = qty }
-            end
-        end
-    end
+	-- Front row
+	if shouldSpawnSideboard then
+		spawnDeckIfAny(sideboardList, {
+			position = self.positionToWorld(SIDEBOARD_POSITION_OFFSET),
+			isFlipped = spawnEverythingFaceDown,
+			deckName = "Sideboard",
+			cardBack = CARD_BACK_NORMAL,
+		})
+	end
+	spawnDeckIfAny(battlefieldList, {
+		position = self.positionToWorld(BATTLEFIELD_POSITION_OFFSET),
+		isFlipped = spawnEverythingFaceDown,
+		deckName = "Battlefields",
+		cardBack = CARD_BACK_BATTLEFIELD,
+		rotatePortrait = true,
+		scale = {0.700, 1, 0.700},
+	})
+	-- Tokens position reserved; notebook doesn't produce a token pile.
 
-    --Make a "finder function based on bundledData.dataType
-    local findCard
-
-    if bundledData.dataType == "id" then
-        local byID = {}
-        for _, card in ipairs(importedDeck) do
-            byID[card.id] = card
-        end
-
-        findCard = function(cardMapData)
-            return byID[cardMapData.id], ("id: " .. tostring(cardMapData.id))
-        end
-
-    elseif bundledData.dataType == "name" then
-        local byName = {}
-        for _, card in ipairs(importedDeck) do
-            byName[card.name] = card
-        end
-
-        -- emergency fallback: front face name for split/MDFC "Front // Back"
-        local function fallbackFrontName(targetName)
-            for _, candidate in ipairs(importedDeck) do
-                local cname = candidate.name
-                if cname and cname:find(" // ", 1, true) then
-                    local front = cname:match("^(.-) // ")
-                    if front == targetName then
-                        return candidate
-                    end
-                end
-            end
-            return nil
-        end
-
-        findCard = function(cardMapData)
-            local card = byName[cardMapData.name] or fallbackFrontName(cardMapData.name)
-            return card, ("name: " .. tostring(cardMapData.name))
-        end
-
-    elseif bundledData.dataType == "collector_number,set" then
-        local byKey = {}
-        for _, card in ipairs(importedDeck) do
-            byKey[tostring(card.collector_number) .. "|" .. tostring(card.set)] = card
-        end
-
-        findCard = function(cardMapData)
-            local key = tostring(cardMapData.collector_number) .. "|" .. tostring(cardMapData.set)
-            return byKey[key], ("key: " .. tostring(key))
-        end
-    end
-
-    -- If unknown dataType, error out and hopefully get bug reports
-    if not findCard then
-        printError(ERROR_MESSAGE_DECKLOADER .. "Unknown dataType: " .. tostring(bundledData.dataType), playerColor)
-        return
-    end
-
-    for _, cardMapData in pairs(cardMap) do
-        local card, label = findCard(cardMapData)
-        if not card then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Missing card for " .. label, playerColor)
-        else
-            pushCardIntoDecks(cardMapData, card)
-        end
-    end
-
-    local tokenDeck = {}
-    if not skipTokens then --don't make a token deck if it's not needed (Tokens still needed to be imported from Scryfall to attach the data to the cards that make them)
-
-        -- Sort tokens into a deck (deduped)
-        if importedTokens then
-            local seen = {}
-
-            local function markSeen(id)
-                if not id then return false end
-                if seen[id] then return false end
-                seen[id] = true
-                return true
-            end
-
-            for _, token in ipairs(importedTokens) do
-                if token.id then
-                    if markSeen(token.oracle_id) then
-                        tokenDeck[#tokenDeck + 1] = { card = token, qty = 1 }
-                    end
-                elseif token.card_faces then
-                    -- reversible tokens: oracle_id may live on faces
-                    local id1 = token.card_faces[1] and token.card_faces[1].oracle_id
-                    local id2 = token.card_faces[2] and token.card_faces[2].oracle_id
-
-                    -- add once if both faces are unseen
-                    if id1 and id2 and not seen[id1] and not seen[id2] then
-                        seen[id1] = true
-                        seen[id2] = true
-                        tokenDeck[#tokenDeck + 1] = { card = token, qty = 1 }
-                    end
-                end
-            end
-
-            
-        end
-    end
-
-    pendingDeckSpawns = 0
-    for _, deck in pairs(getDeckByQtyField) do
-        if #deck > 0 then
-            pendingDeckSpawns = pendingDeckSpawns + 1
-        end
-    end
-    if #tokenDeck > 0 then
-        pendingDeckSpawns = pendingDeckSpawns + 1
-    end
-
-    -- Spawn main piles
-    spawnDeckIfAny(mainboardDeck, {
-        position = self.positionToWorld(MAINDECK_POSITION_OFFSET),
-        isFlipped = true, -- always face down
-        deckName = deckName,
-        onSpawn = function(obj)
-            obj.shuffle()
-        end
-    })
-
-    spawnDeckIfAny(commanderDeck, {
-        position = self.positionToWorld(COMMANDER_POSITION_OFFSET),
-        isFlipped = spawnEverythingFaceDown,
-        deckName = "Commander"
-    })
-
-    spawnDeckIfAny(maybeboardDeck, {
-        position = self.positionToWorld(MAYBEBOARD_POSITION_OFFSET),
-        isFlipped = spawnEverythingFaceDown,
-        deckName = "Maybeboard"
-    })
-
-    spawnDeckIfAny(sideboardDeck, {
-        position = self.positionToWorld(SIDEBOARD_POSITION_OFFSET),
-        isFlipped = spawnEverythingFaceDown,
-        deckName = "Sideboard"
-    })
-
-    spawnDeckIfAny(tokenDeck, {
-        position = self.positionToWorld(TOKEN_POSITION_OFFSET),
-        isFlipped = spawnEverythingFaceDown,
-        deckName = "Tokens"
-    })
-end
-
--- ============================================================================
--- PARSERS (URL / DECK IDS / DECK LINES)
--- ============================================================================
-local function parseDeckIDArchidekt(s)
-    return s:match("archidekt%.com/decks/(%d*)")
-end
-
-local function parseDeckIDMoxfield(s)
-    local urlSuffix = s:match("moxfield%.com/decks/(.*)")
-    if urlSuffix then
-        return urlSuffix:match("([^%s%?/$]*)")
-    else
-        return nil
-    end
-end
-
-local function parseDeckIDTappedout(s)
-    -- NOTE: need to do this in multiple parts because TTS uses an old version
-    -- of lua with hilariously sad pattern matching
-    local urlSuffix = s:match("tappedout%.net/mtg%-decks/(.*)")
-    if urlSuffix then
-        return urlSuffix:match("([^%s%?/$]*)")
-    else
-        return nil
-    end
-end
-
-local function parseDeckIDDeckstats(s)
-    -- Remove query string first
-    s = s:match("^[^?]+") or s
-
-    -- Extract deck path
-    local deckURL = s:match("(deckstats%.net/decks/%d+/[^/]*)")
-    return deckURL
-end
-
-local function parseMTGALine(line)
-    -- Parse out card count if exists
-    local count, countIndex = string.match(line, "^%s*(%d+)[x%*]?%s+()")
-    if count and countIndex then
-        line = string.sub(line, countIndex)
-    else
-        count = 1
-    end
-
-    local name, setCode, collectorNum = string.match(line, "([^%(%)]+) %(([%d%l%u]+)%) ([%d%l%u]+)")
-
-    if not name then
-        name, setCode = string.match(line, "([^%(%)]+) %(([%d%l%u]+)%)")
-    end
-
-    if not name then
-       name = string.match(line, "([^%(%)]+)")
-    end
-
-    -- MTGA format uses DAR for dominaria for some reason, which scryfall can't find.
-    if setCode == "DAR" then
-        setCode = "DOM"
-    end
-
-    return name, count, setCode, collectorNum
-end
-
-local function parseCardLine(line, format)
-    -- Parses one deck line into:
-    -- qty = number,
-    -- name = string,
-    -- set = string|nil,
-    -- num = string|nil,
-    -- format = "name_set_num" | "set_name" | "name_only"
-
-    if not line then return nil, "nil line" end
-
-    -- trim
-    line = trim(line)
-
-    local qty = 1
-    local rest = line
-
-    -- Quantity (2, 2x, 2*, etc.) at start SOMETIMES, assumes 1 otherwise
-    local qtyStr, afterQtyIdx = line:match("^(%d+)%s*[x%*]?%s+()")
-    if qtyStr then
-        qty = tonumber(qtyStr) or 1
-        rest = line:sub(afterQtyIdx)
-        rest = rest:gsub("^%s+", "")
-    end
-
-    if rest == "" then
-        return nil, "missing card data"
-    end
-
-    if not format or format == "name_set_num" then
-        -- FORMAT 1: CARDNAME (SET) NUM
-        -- Example: "Lightning Bolt (M11) 146"
-        local name, set, num = rest:match("^(.-)%s*%((%w+)%)%s*(%S+)%s*$")
-        if name and set and num then
-            name = trim(name)
-            return qty, name, set:lower(), num, "name_set_num" -- qty, name, set, num, format
-        end
-    end
-
-    if not format or format == "set_name" then
-        -- FORMAT 2: [SET] CARDNAME
-        -- Example: "[mh2] Ragavan, Nimble Pilferer"
-        local set, name = rest:match("^%[(%w+)%]%s*(.+)$")
-        if set and name then
-            name = trim(name)
-            return qty, name, set:lower(), nil, "set_name" -- qty, name, set, num, format
-        end
-    end
-
-    if not format or format == "name" then
-        local name = trim(rest)
-        if name ~= "" then
-            return qty, name, nil, nil, "name" -- qty, name, set, num, format
-        end
-    end
-    return nil, nil, nil, nil, nil -- qty, name, set, num, format
+	-- Back row (legend + champion both spawn at LEGEND_POSITION — TTS stacks them)
+	spawnDeckIfAny(legendList, {
+		position = self.positionToWorld(LEGEND_POSITION_OFFSET),
+		isFlipped = spawnEverythingFaceDown,
+		deckName = "Legends",
+		cardBack = CARD_BACK_LEGEND,
+	})
+	spawnDeckIfAny(championList, {
+		position = self.positionToWorld(CHAMPION_POSITION_OFFSET),
+		isFlipped = spawnEverythingFaceDown,
+		deckName = "Champions",
+		cardBack = CARD_BACK_NORMAL,
+	})
+	spawnDeckIfAny(runeList, {
+		position = self.positionToWorld(RUNE_POSITION_OFFSET),
+		isFlipped = spawnEverythingFaceDown,
+		deckName = "Runes",
+		cardBack = CARD_BACK_RUNE,
+	})
+	spawnDeckIfAny(mainboardList, {
+		position = self.positionToWorld(MAINDECK_POSITION_OFFSET),
+		isFlipped = true,
+		deckName = deckName,
+		cardBack = CARD_BACK_NORMAL,
+		onSpawn = function(obj) obj.shuffle() end,
+	})
 end
 
 
 -- ============================================================================
 -- NOTEBOOK IMPORT
 -- ============================================================================
-local function readNotebookForColor(playerColor)
-    for _, tab in ipairs(Notes.getNotebookTabs()) do
-        if tab.title == playerColor and tab.color == playerColor then
-            return tab.body
-        end
-    end
-
-    return nil
+local function readNotebookForColor(color)
+	for _, tab in ipairs(Notes.getNotebookTabs()) do
+		if tab.title == color and tab.color == color then
+			return tab.body
+		end
+	end
+	return nil
 end
 
 local notebookImportCategoryMap = {
-    commander = { mode = "commander", qtyField = "commanderQty" },
-    sideboard = { mode = "sideboard", qtyField = "sideboardQty" },
-    deck      = { mode = "mainboard", qtyField = "mainboardQty" },
-    maindeck  = { mode = "mainboard", qtyField = "mainboardQty" },
-    mainboard = { mode = "mainboard", qtyField = "mainboardQty" },
-    about     = { mode = "about", qtyField = "mainboardQty" } --set to mainboardQty here just in case?
+	legend      = { qtyField = "legendQty"      },
+	champion    = { qtyField = "championQty"    },
+	champions   = { qtyField = "championQty"    },
+	battlefield = { qtyField = "battlefieldQty" },
+	battlefields= { qtyField = "battlefieldQty" },
+	rune        = { qtyField = "runeQty"        },
+	runes       = { qtyField = "runeQty"        },
+	sideboard   = { qtyField = "sideboardQty"   },
+	deck        = { qtyField = "mainboardQty"   },
+	maindeck    = { qtyField = "mainboardQty"   },
+	mainboard   = { qtyField = "mainboardQty"   },
+	about       = { qtyField = nil              },
 }
 
 local function queryDeckNotebook(_)
-    local notebookContents = readNotebookForColor(playerColor)
+	local notebookContents = readNotebookForColor(playerColor)
 
-    if notebookContents == nil then
-        printError(ERROR_MESSAGE_DECKLOADER .. "Notebook not found: " .. playerColor, playerColor)
-        lockImporter(false)
-        return
-    elseif string.len(notebookContents) == 0 then
-        printError(ERROR_MESSAGE_DECKLOADER .. "Notebook is empty. Please paste your decklist into your notebook (" .. playerColor .. ").", playerColor)
-        lockImporter(false)
-        return
-    end
+	if notebookContents == nil then
+		printError(ERROR_MESSAGE_DECKLOADER .. "Notebook not found: " .. playerColor, playerColor)
+		lockImporter(false)
+		return
+	elseif string.len(notebookContents) == 0 then
+		printError(ERROR_MESSAGE_DECKLOADER .. "Notebook is empty. Please paste your decklist into your " .. playerColor .. " notebook.", playerColor)
+		lockImporter(false)
+		return
+	end
 
-    local cardMap = {}
+	local cardMap = {}
+	local qtyField = "mainboardQty"
+	local inAbout  = false
 
-    local mode = "mainboard"
-    local format, scryfallFormat
-    local qtyField = "mainboardQty"
+	for line in iterateLines(notebookContents) do
+		if string.len(line) > 0 and not inAbout then
+			-- Strip trailing colon so "Legend:" works alongside "Legend"
+			local categoryCheck = trim(line):lower():gsub(":$", "")
+			local entryCheck    = notebookImportCategoryMap[categoryCheck]
 
+			if entryCheck then
+				if entryCheck.qtyField == nil then
+					inAbout = true
+				else
+					qtyField = entryCheck.qtyField
+				end
+			else
+				-- Parse line: optional qty prefix, then card name
+				local qtyStr, afterIdx = line:match("^%s*(%d+)%s*[x%*]?%s+()")
+				local qty = 1
+				local rest = line
+				if qtyStr then
+					qty  = tonumber(qtyStr) or 1
+					rest = trim(line:sub(afterIdx))
+				else
+					rest = trim(line)
+				end
 
-    for line in iterateLines(notebookContents) do
-        if string.len(line) > 0 and mode ~= "about" then
-            local categoryCheck = line:lower()
-            local entryCheck = notebookImportCategoryMap[categoryCheck]
+				if rest ~= "" then
+					-- Strip optional variant: "Card Name (SET) 123"
+					-- Builds a Piltover CDN image URL for that specific printing.
+					local variantImageURL = nil
+					local baseName, setCode, collNum = rest:match("^(.-)%s*%((%a+)%)%s+(%w+)$")
+					if baseName and baseName ~= "" and setCode and collNum then
+						rest = baseName
+						variantImageURL = "https://cdn.piltoverarchive.com/cards/" .. setCode .. "-" .. collNum .. ".webp"
+					end
 
-            if entryCheck then
-                mode = entryCheck.mode
-                qtyField = entryCheck.qtyField
-            else
+					local name = rest
+					local entry = cardMap[name]
+					if not entry then
+						entry = {
+							name            = name,
+							legendQty       = 0,
+							championQty     = 0,
+							battlefieldQty  = 0,
+							runeQty         = 0,
+							sideboardQty    = 0,
+							mainboardQty    = 0,
+							variantImageURL = variantImageURL,
+						}
+						cardMap[name] = entry
+					elseif variantImageURL and not entry.variantImageURL then
+						entry.variantImageURL = variantImageURL
+					end
+					entry[qtyField] = entry[qtyField] + qty
+				end
+			end
+		end
+	end
 
-                local qty, name, setCode, collectorNum, returnFormat = parseCardLine(line, format)
-
-                if not format then
-                    format = returnFormat
-                    if not format then
-                        printError(ERROR_MESSAGE_DECKLOADER .. "Notebook importer error: nil format", playerColor)
-                        lockImporter(false)
-                        break
-                    end
-                end
-
-
-                local key
-
-                if format == "card_set_num" then
-                    scryfallFormat = "collector_number,set"
-                    key = collectorNum .. "|" .. setCode
-                    local entry = cardMap[key]
-                    
-                    if not entry then
-                        entry = {
-                            collector_number = collectorNum,
-                            set = setCode,
-                            commanderQty=0,
-                            sideboardQty=0,
-                            maybeboardQty=0,
-                            mainboardQty=0
-                        }
-                        cardMap[key] = entry
-                    end
-                elseif format == "set_card" then
-                    scryfallFormat = "name,set"
-                    key = name .. "|" .. setCode
-                    local entry = cardMap[key]
-                    
-                    if not entry then
-                        entry = {
-                            name = name,
-                            set = setCode,
-                            commanderQty=0,
-                            sideboardQty=0,
-                            maybeboardQty=0,
-                            mainboardQty=0
-                        }
-                        cardMap[key] = entry
-                    end
-                elseif format == "name" then
-                    scryfallFormat = "name"
-                    key = name
-                    local entry = cardMap[key]
-                    
-                    if not entry then
-                        entry = {
-                            name = name,
-                            commanderQty=0,
-                            sideboardQty=0,
-                            maybeboardQty=0,
-                            mainboardQty=0
-                        }
-                        cardMap[key] = entry
-                    end
-                else
-                    printError(ERROR_MESSAGE_DECKLOADER .. "Notebook importer error: format not found", playerColor)
-                    lockImporter(false)
-                    break
-                end
-
-                cardMap[key][qtyField] = cardMap[key][qtyField] + qty
-            end
-        end
-    end
-
-    loadDeckFromMainModule(cardMap, "postDeckLoad", scryfallFormat)
+	loadDeckFromMainModule(cardMap, "postDeckLoad")
 end
 
 -- ============================================================================
--- REMOTE DECK QUERIES (SITE INTEGRATIONS)
+-- PILTOVER ARCHIVE IMPORT
 -- ============================================================================
-local function queryDeckArchidekt(deckID)
-    if not deckID or string.len(deckID) == 0 then
-        printError(ERROR_MESSAGE_DECKLOADER .. "Invalid Archidekt deck: " .. deckID, playerColor)
-        lockImporter(false)
-        return
-    end
-
-    local url = ARCHIDEKT_BASE_URL .. deckID .. ARCHIDEKT_URL_SUFFIX
-
-    printInfo("Fetching decklist from Archidekt...", playerColor)
-
-    WebRequest.get(url, function(webReturn)
-        if webReturn.error then
-            if string.match(webReturn.error, "(404)") then
-                printError(ERROR_MESSAGE_DECKLOADER .. "Deck not found. Is it public?", playerColor)
-                lockImporter(false)
-            else
-                printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: " .. tostring(webReturn.error), playerColor)
-                lockImporter(false)
-            end
-            return
-        elseif webReturn.is_error then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: unknown", playerColor)
-            lockImporter(false)
-            return
-        elseif string.len(webReturn.text) == 0 then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: empty response", playerColor)
-            lockImporter(false)
-            return
-        end
-
-        local success, data = pcall(function() return json.decode(webReturn.text) end)
-
-        if not success then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Failed to parse JSON response from Archidekt.", playerColor)
-            lockImporter(false)
-            return
-        elseif not data then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Empty response from Archidekt.", playerColor)
-            lockImporter(false)
-            return
-        elseif not data.cards then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Empty response from Archidekt. Did you enter a valid deck URL?", playerColor)
-            lockImporter(false)
-            return
-        end
-
-        local function isMaybeboard(card)
-            if card.categories and card.categories[1] then
-                local firstCategoryName = card.categories[1]
-
-                for _, category in ipairs(data.categories) do
-                    if category.name == firstCategoryName then
-                        if not category.includedInDeck then
-                            return true
-                        end
-                    end
-                end
-
-                return false
-            end
-        end
-
-        local function hasCategoryNamed(card, name)
-            if card.categories then
-                return valInTable(card.categories, name)
-            else
-                return false
-            end
-        end
-
-        local cardMap = {}
-
-        for _, card in ipairs(data.cards) do
-            if card and card.card then
-                local key = card.card.uid
-                local entry = cardMap[key]
-
-                if not entry then
-                    entry = {
-                        id = key,
-                        commanderQty=0,
-                        sideboardQty=0,
-                        maybeboardQty=0,
-                        mainboardQty=0
-                    }
-
-                    cardMap[key] = entry
-                end
-
-                if hasCategoryNamed(card, "Commander") then
-                    entry.commanderQty = entry.commanderQty + card.quantity
-                elseif hasCategoryNamed(card, "Sideboard") then
-                    if not skipSideboard then
-                        entry.sideboardQty = entry.sideboardQty + card.quantity
-                    end
-                elseif isMaybeboard(card) then
-                    if not skipMaybeboard then
-                        entry.maybeboardQty = entry.maybeboardQty + card.quantity
-                    end
-                else
-                    entry.mainboardQty = entry.mainboardQty + card.quantity
-                end
-            end
-        end
-
-        options = {
-            deckName = data.name or ""
-        }
-
-        loadDeckFromMainModule(cardMap, "postDeckLoad", "id", options)
-
-    end)
+local function parseDeckIDPiltover(url)
+	-- Handles: /decks/view/{uuid} and /decks/{uuid}
+	return url:match("piltoverarchive%.com/decks/view/([%w%-]+)")
+		or url:match("piltoverarchive%.com/decks/([%w%-]+)")
 end
 
-local function queryDeckMoxfield(deckID)
-    if not deckID or string.len(deckID) == 0 then
-        printError(ERROR_MESSAGE_DECKLOADER .. "Invalid Moxfield deck: " .. deckID, playerColor)
-        lockImporter(false)
-        return
-    end
+local function queryDeckPiltover(deckUUID)
+	if not deckUUID or string.len(deckUUID) == 0 then
+		printError(ERROR_MESSAGE_DECKLOADER .. "Could not parse Piltover Archive deck UUID from URL.", playerColor)
+		lockImporter(false)
+		return
+	end
 
-    local url = MOXFIELD_BASE_URL .. deckID .. MOXFIELD_URL_SUFFIX
+	local url     = PILTOVERARCHIVE_API_BASE .. "/api/external/v1/decks/export/text"
+	local headers = {["Content-Type"] = "application/json", ["Accept"] = "application/json"}
+	local payload = json.encode({deckId = deckUUID})
+	printInfo("Fetching decklist from Piltover Archive...", playerColor)
 
-    printInfo("Fetching decklist from Moxfield...", playerColor)
+	WebRequest.custom(url, "POST", true, payload, headers, function(webReturn)
+		if webReturn.response_code == 0 then
+			printError(ERROR_MESSAGE_DECKLOADER .. "Could not reach Piltover Archive.", playerColor)
+			lockImporter(false)
+			return
+		elseif webReturn.response_code == 404 then
+			printError(ERROR_MESSAGE_DECKLOADER .. "Deck not found on Piltover Archive. Is it public?", playerColor)
+			lockImporter(false)
+			return
+		elseif webReturn.response_code ~= 200 then
+			printError(ERROR_MESSAGE_DECKLOADER .. "Piltover Archive error (" .. tostring(webReturn.response_code) .. ").", playerColor)
+			lockImporter(false)
+			return
+		elseif not webReturn.text or string.len(webReturn.text) == 0 then
+			printError(ERROR_MESSAGE_DECKLOADER .. "Empty response from Piltover Archive.", playerColor)
+			lockImporter(false)
+			return
+		end
 
-    local headers = {
-        ["Content-Type"] = "application/json",
-        ["Accept"] = "application/json",
-        ["User-Agent"] = "TTS-MTG-Card-Importer/1.0"
-    }
+		local ok, data = pcall(function() return json.decode(webReturn.text) end)
+		if not ok or not data or not data.text or string.len(data.text) == 0 then
+			printError(ERROR_MESSAGE_DECKLOADER .. "Failed to parse response from Piltover Archive.", playerColor)
+			lockImporter(false)
+			return
+		end
 
-    WebRequest.custom(url, "GET", true, "", headers, function(webReturn)
-        if webReturn.error then
-            if string.match(webReturn.error, "(404)") then
-                printError(ERROR_MESSAGE_DECKLOADER .. "Deck not found. Is it public?", playerColor)
-                lockImporter(false)
-            else
-                printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: " .. webReturn.error, playerColor)
-                lockImporter(false)
-            end
-            return
-        elseif webReturn.is_error then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: unknown", playerColor)
-            lockImporter(false)
-            return
-        elseif string.len(webReturn.text) == 0 then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: empty response", playerColor)
-            lockImporter(false)
-            return
-        end
+		-- The text export uses section headers with a trailing colon (e.g. "Legend:",
+		-- "MainDeck:") which we strip before looking up in notebookImportCategoryMap.
+		local cardMap  = {}
+		local qtyField = "mainboardQty"
+		local inAbout  = false
 
+		for line in iterateLines(data.text) do
+			if string.len(line) > 0 and not inAbout then
+				local categoryCheck = trim(line):lower():gsub(":$", "")
+				local entryCheck    = notebookImportCategoryMap[categoryCheck]
 
-        local raw = webReturn.text
-        local unicodeMap = {
-            ["\\u2014"] = "-",   -- em dash
-            ["\\u2013"] = "-",   -- en dash
-            ["\\u2018"] = "'",   -- left single quote
-            ["\\u2019"] = "'",   -- right single quote
-            ["\\u201c"] = '"',   -- left double quote
-            ["\\u201d"] = '"',   -- right double quote
-            ["\\u0026"] = "&",   -- ampersand
-            ["\\u002b"] = "+",   -- plus sign
-            ["\\u0027"] = "'"   -- apostrophe
-        }
+				if entryCheck then
+					if entryCheck.qtyField == nil then
+						inAbout = true
+					else
+						qtyField = entryCheck.qtyField
+					end
+				else
+					local qtyStr, afterIdx = line:match("^%s*(%d+)%s*[x%*]?%s+()")
+					local qty = 1
+					local rest = line
+					if qtyStr then
+						qty  = tonumber(qtyStr) or 1
+						rest = trim(line:sub(afterIdx))
+					else
+						rest = trim(line)
+					end
 
-        -- pass 1: replace known escapes
-        raw = raw:gsub("(\\u%x%x%x%x)", unicodeMap)
+					if rest ~= "" then
+						local entry = cardMap[rest]
+						if not entry then
+							entry = {
+								name          = rest,
+								legendQty     = 0,
+								championQty   = 0,
+								battlefieldQty= 0,
+								runeQty       = 0,
+								sideboardQty  = 0,
+								mainboardQty  = 0,
+							}
+							cardMap[rest] = entry
+						end
+						entry[qtyField] = entry[qtyField] + qty
+					end
+				end
+			end
+		end
 
-        -- pass 2: anything still left is unknown
-        raw = raw:gsub("\\u%x%x%x%x", "ERROR")
-
-
-        local success, data = pcall(function() return json.decode(raw) end)
-
-        if not success then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Failed to parse JSON response from Moxfield.", playerColor)
-            lockImporter(false)
-            return
-        elseif not data then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Empty response from Moxfield.", playerColor)
-            lockImporter(false)
-            return
-        elseif not data.name or not data.mainboard then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Empty response from Moxfield. Did you enter a valid deck URL?", playerColor)
-            lockImporter(false)
-            return
-        end
-
-        local cardMap = {}
-        
-        local function accumulateList(list, qtyField)
-            for _, card in pairs(list or {}) do
-                if card and card.card then
-                    local key = card.card.scryfall_id
-                    local entry = cardMap[key]
-
-                    if not entry then
-                        entry = {
-                            id = key,
-                            commanderQty=0,
-                            sideboardQty=0,
-                            maybeboardQty=0,
-                            mainboardQty=0
-                        }
-
-                        cardMap[key] = entry
-                    end
-
-                    entry[qtyField] = entry[qtyField] + card.quantity
-                end
-            end
-        end
-
-        accumulateList(data.commanders, "commanderQty")
-        accumulateList(data.mainboard,  "mainboardQty")
-        if not skipSideboard then
-            accumulateList(data.sideboard,  "sideboardQty")
-        end
-        if not skipMaybeboard then
-            accumulateList(data.maybeboard, "maybeboardQty")
-        end
-
-        local options = {
-            deckName = data.name or ""
-        }
-
-        loadDeckFromMainModule(cardMap, "postDeckLoad", "id", options)
-    end)
-end
-
-local function queryDeckTappedout(deckID)
-    if not deckID or string.len(deckID) == 0 then
-        printError(ERROR_MESSAGE_DECKLOADER .. "Invalid TappedOut deck URL: " .. tostring(deckID), playerColor)
-        lockImporter(false)
-        return
-    end
-
-    local url = TAPPEDOUT_BASE_URL .. deckID .. TAPPEDOUT_URL_SUFFIX
-
-    printInfo("Fetching decklist from TappedOut (very limited API)...", playerColor)
-
-    WebRequest.get(url .. "?fmt=txt", function(webReturn)
-
-        if webReturn.error then
-            if string.match(webReturn.error, "(404)") then
-                printError(ERROR_MESSAGE_DECKLOADER .. "Deck not found. Is it public?", playerColor)
-                lockImporter(false)
-            else
-                printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: " .. webReturn.error, playerColor)
-                lockImporter(false)
-            end
-            return
-        elseif webReturn.is_error then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: unknown", playerColor)
-            lockImporter(false)
-            return
-        elseif not webReturn.text or string.len(webReturn.text) == 0 then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: empty response", playerColor)
-            lockImporter(false)
-            return
-        end
-
-        local cardMap = {}
-        local isSideboard = false
-
-        for line in iterateLines(webReturn.text) do
-            if line and string.len(line) > 0 then
-
-                -- Detect sideboard
-                if line == "Sideboard:" then
-                    isSideboard = true
-                else
-                    -- Expected format: "<qty> <card name>"
-                    local qtyStr, name = string.match(line, "^(%d+)%s+(.+)$")
-
-                    if qtyStr and name then
-                        local qty = tonumber(qtyStr) or 0
-                        name = name:gsub("^%s+", ""):gsub("%s+$", "")
-
-                        -- Use card name as key
-                        local entry = cardMap[name]
-
-                        if not entry then
-                            entry = {
-                                name = name,
-                                mainboardQty = 0,
-                                sideboardQty = 0
-                            }
-                            cardMap[name] = entry
-                        end
-
-                        if isSideboard then
-                            if not skipSideboard then
-                                entry.sideboardQty = entry.sideboardQty + qty
-                            end
-                        else
-                            entry.mainboardQty = entry.mainboardQty + qty
-                        end
-                    end
-                end
-            end
-        end
-
-        loadDeckFromMainModule(cardMap, "postDeckLoad", "name")
-    end)
-end
-
-local function queryDeckDeckstats(deckURL)
-    if not deckURL or string.len(deckURL) == 0 then
-        printError(ERROR_MESSAGE_DECKLOADER .. "Invalid deckstats URL: " .. deckURL, playerColor)
-        lockImporter(false)
-        return
-    end
-
-    local url = deckURL .. DECKSTATS_URL_SUFFIX
-
-
-    printInfo("Fetching decklist from deckstats...", playerColor)
-
-    local headers = {
-        ["Content-Type"] = "application/json",
-        ["Accept"] = "application/json",
-        ["User-Agent"] = "TTS-MTG-Card-Importer/1.0"
-    }
-
-    WebRequest.custom(url, "GET", true, "", headers, function(webReturn)
-        if webReturn.error then
-            if string.match(webReturn.error, "(404)") then
-                printError(ERROR_MESSAGE_DECKLOADER .. "Deck not found. Is it public?", playerColor)
-                lockImporter(false)
-            else
-                printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: " .. webReturn.error, playerColor)
-                lockImporter(false)
-            end
-            return
-        elseif webReturn.is_error then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: unknown", playerColor)
-            lockImporter(false)
-            return
-        elseif string.len(webReturn.text) == 0 then
-            printError(ERROR_MESSAGE_DECKLOADER .. "Web request error: empty response", playerColor)
-            lockImporter(false)
-            return
-        end
-
-        local cardMap = {}
-        local isSideboard = false
-
-
-        
-        for line in iterateLines(webReturn.text) do
-            if line then
-                if string.len(line) == 0 then
-                    isSideboard = true
-                else
-
-                    local name, qty, setCode, collectorNum = parseMTGALine(line)
-
-                    local key = name
-                    local entry = cardMap[key]
-
-                    if not entry then
-                        entry = {
-                            name = name,
-                            mainboardQty = 0,
-                            sideboardQty = 0
-                        }
-                        cardMap[key] = entry
-                    end
-
-                    if isSideboard then
-                        entry.sideboardQty = entry.sideboardQty + qty
-                    else
-                        entry.mainboardQty = entry.mainboardQty + qty
-                    end
-                end
-            end
-        end
-
-        --[[ 
-        -- DX Note: I don't like this method, I would rather just not sort out the commander...
-
-        -- This sucks... but the arena export format is the only one that gives
-        -- me full data on printings and this is the best way I've found to tell
-        -- if its a commander deck.
-        if #cards >= 90 then
-            cards[1].commander = true
-        end
-        ]]
-
-        local options = {
-            deckName = deckURL:match("deckstats%.net/decks/%d*/%d*-([^/?]*)") or ""
-
-        }
-
-        loadDeckFromMainModule(cardMap, "postDeckLoad", "name", options)
-    end)
+		loadDeckFromMainModule(cardMap, "postDeckLoad")
+	end)
 end
 
 -- ============================================================================
 -- UI BUILD / UI HANDLERS
 -- ============================================================================
 local function drawUI()
-    local _inputs = self.getInputs()
-    local deckURL = ""
+	local _inputs = self.getInputs()
+	local deckURL = ""
 
-    if _inputs ~= nil then
-        for _, input in pairs(self.getInputs()) do
-            if input.label == "Enter deck URL, or load from Notebook." then
-                deckURL = input.value
-            end
-        end
-    end
-    self.clearInputs()
-    self.clearButtons()
-    self.createInput({
-        input_function = "onLoadDeckInput",
-        function_owner = self,
-        label          = "Enter deck URL, or load from Notebook.",
-        alignment      = 2,
-        position       = {x=0, y=0.1, z=0.925},
-        width          = 1800,
-        height         = 100,
-        font_size      = 70,
-        validation     = 1,
-        value = deckURL,
-    })
+	if _inputs ~= nil then
+		for _, input in pairs(self.getInputs()) do
+			if input.label == "Enter a Piltover Archive deck URL, or load from Notebook." then
+				deckURL = input.value
+			end
+		end
+	end
+	self.clearInputs()
+	self.clearButtons()
 
-    self.createButton({
-        click_function = "onLoadDeckURLButton",
-        function_owner = self,
-        label          = "Import (URL)",
-        position       = {-0.85, 0.1, 1.3},
-        rotation       = {0, 0, 0},
-        width          = 750,
-        height         = 160,
-        font_size      = 80,
-        color          = {0.5, 0.5, 0.5},
-        font_color     = {r=1, b=1, g=1},
-        tooltip        = "Click to import deck from URL",
-    })
+	self.createInput({
+		input_function = "onLoadDeckInput",
+		function_owner = self,
+		label          = "Enter a Piltover Archive deck URL, or load from Notebook.",
+		alignment      = 2,
+		position       = {x=0, y=0.1, z=0.925},
+		width          = 1800,
+		height         = 100,
+		font_size      = 70,
+		validation     = 1,
+		value          = deckURL,
+	})
 
-    self.createButton({
-        click_function = "onLoadDeckNotebookButton",
-        function_owner = self,
-        label          = "Import (Notebook)",
-        position       = {0.85, 0.1, 1.3},
-        rotation       = {0, 0, 0},
-        width          = 750,
-        height         = 160,
-        font_size      = 80,
-        color          = {0.5, 0.5, 0.5},
-        font_color     = {r=1, b=1, g=1},
-        tooltip        = "Click to import deck from notebook",
-    }) 
+	self.createButton({
+		click_function = "onLoadDeckURLButton",
+		function_owner = self,
+		label          = "Import (URL)",
+		position       = {-0.85, 0.1, 1.3},
+		rotation       = {0, 0, 0},
+		width          = 750,
+		height         = 160,
+		font_size      = 80,
+		color          = {0.5, 0.5, 0.5},
+		font_color     = {r=1, b=1, g=1},
+		tooltip        = "Import deck from Piltover Archive (piltoverarchive.com)",
+	})
 
-    self.createButton({
-        click_function = "onToggleAdvancedButton",
-        function_owner = self,
-        label          = "☰",
-        position       = {1.85, 0.1, 1.3},
-        rotation       = {0, 0, 0},
-        width          = 160,
-        height         = 160,
-        font_size      = 100,
-        color          = {0.5, 0.5, 0.5},
-        font_color     = {r=1, b=1, g=1},
-        tooltip        = "Click to open advanced menu",
-    })
+	self.createButton({
+		click_function = "onLoadDeckNotebookButton",
+		function_owner = self,
+		label          = "Import (Notebook)",
+		position       = {0.85, 0.1, 1.3},
+		rotation       = {0, 0, 0},
+		width          = 750,
+		height         = 160,
+		font_size      = 80,
+		color          = {0.5, 0.5, 0.5},
+		font_color     = {r=1, b=1, g=1},
+		tooltip        = "Import deck from your player notebook",
+	})
 
-    if advanced then
-        self.UI.show(UI_ADVANCED_PANEL)
-    else
-        self.UI.hide(UI_ADVANCED_PANEL)
-    end
-    
+	self.createButton({
+		click_function = "onToggleAdvancedButton",
+		function_owner = self,
+		label          = "☰",
+		position       = {1.85, 0.1, 1.3},
+		rotation       = {0, 0, 0},
+		width          = 160,
+		height         = 160,
+		font_size      = 100,
+		color          = {0.5, 0.5, 0.5},
+		font_color     = {r=1, b=1, g=1},
+		tooltip        = "Open advanced options",
+	})
+
+	if advanced then
+		self.UI.show(UI_ADVANCED_PANEL)
+	else
+		self.UI.hide(UI_ADVANCED_PANEL)
+	end
 end
-
 
 function getDeckInputValue()
-    for _, input in pairs(self.getInputs()) do
-        --NOTE Fix this vvvv weird way to find that input
-        if input.label == "Enter deck URL, or load from Notebook." then
-            return trim(input.value)
-        end
-    end
-
-    return ""
+	for _, input in pairs(self.getInputs()) do
+		if input.label == "Enter a Piltover Archive deck URL, or load from Notebook." then
+			return trim(input.value)
+		end
+	end
+	return ""
 end
 
-function importDeck(decklistType, pc) --pc is playerColor
+function importDeck(decklistType, pc)
+	if not getRiftboundImporter() then return end
 
-    if not getMTGImporterDX() then
-        -- Importer module wasn't found, stop working
-        return
-    end
-    local importerLock = MTGImporterDX.call("isImporterLocked")
-    if importerLock then
-        printError(ERROR_MESSAGE_DECKLOADER .. importerLock, pc)
-        return
-    end
+	local importerLock = RiftboundImporter.call("isImporterLocked")
+	if importerLock then
+		printError(ERROR_MESSAGE_DECKLOADER .. importerLock, pc)
+		return
+	end
 
-    if (self.getLock()) then
-        printToColor("This importer is already working, please wait until it's complete!", pc) --do this print manually here to not set playerColor until we know we're actually going to run
-        return
-    end
+	if self.getLock() then
+		printToColor("This importer is already working, please wait until it's complete!", pc)
+		return
+	end
 
-    --lock both after we've checked neither are in use
-    lockImporter(true) --lock the importer and deckloader for future work until this is done
-    lockSelf(true)
+	lockImporter(true)
+	lockSelf(true)
 
+	playerColor = pc
 
-    playerColor = pc --Wait to set the playerColor until we know nothing is currently running
+	local deckURL = getDeckInputValue()
 
-    local deckURL = getDeckInputValue()
+	if decklistType == "url" then
+		if string.len(deckURL) == 0 then
+			printInfo("Please enter a deck URL.", playerColor)
+			lockSelf(false)
+			lockImporter(false)
+			return
+		end
 
-    local deckID
-    if decklistType == "url" then
-        if string.len(deckURL) == 0 then
-            printInfo("Please enter a deck URL.", playerColor)
-            lockSelf(false)
-            lockImporter(false)
-            return
-        end
+		if string.match(deckURL, PILTOVERARCHIVE_URL_MATCH) then
+			printInfo("Starting deck import from Piltover Archive...", playerColor)
+			local deckUUID = parseDeckIDPiltover(deckURL)
+			queryDeckPiltover(deckUUID)
+			return
+		else
+			printInfo("Unknown deck site. Please use a Piltover Archive URL (piltoverarchive.com) or use Notebook import.", playerColor)
+		end
 
-        if string.match(deckURL, TAPPEDOUT_URL_MATCH) then
-            printInfo("Starting deck import...")
-            deckID = parseDeckIDTappedout(deckURL)
-            queryDeckTappedout(deckID)
-            return
-        elseif string.match(deckURL, ARCHIDEKT_URL_MATCH) then
-            printInfo("Starting deck import...")
-            deckID = parseDeckIDArchidekt(deckURL)
-            queryDeckArchidekt(deckID)
-            return
-        elseif string.match(deckURL, GOLDFISH_URL_MATCH) then
-            printInfo("MTGGoldfish support isn't in yet, sorry! In the meantime, please export to MTG Arena, and use notebook import.")
-        elseif string.match(deckURL, MOXFIELD_URL_MATCH) then
-            printInfo("Starting deck import...")
-            deckID = parseDeckIDMoxfield(deckURL)
-            queryDeckMoxfield(deckID)
-            return
-        elseif string.match(deckURL, DECKSTATS_URL_MATCH) then
-            printInfo("Starting deck import...")
-            deckID = parseDeckIDDeckstats(deckURL)
-            queryDeckDeckstats(deckID)
-            return
-        else
-            printInfo("Unknown deck site! Please export to MTG Arena and use notebook import.")
-        end
-    elseif decklistType == "notebook" then
-        printInfo("Starting deck import...")
-        deckID = nil
-        queryDeckNotebook()
-        return
-    else
-        printError(ERROR_MESSAGE_DECKLOADER .. "Unknown deck source: " .. tostring(decklistType), playerColor)
-    end
+	elseif decklistType == "notebook" then
+		printInfo("Starting deck import from Notebook...", playerColor)
+		queryDeckNotebook()
+		return
+	else
+		printError(ERROR_MESSAGE_DECKLOADER .. "Unknown deck source: " .. tostring(decklistType), playerColor)
+	end
 
-    --if by the end of this function nothing returned from it, something errored out. Just unlock both things
-    lockImporter(false)
-    lockSelf(false)
+	lockImporter(false)
+	lockSelf(false)
 end
 
 function onLoadDeckInput(_, _, _, _) end
 
 function onLoadDeckURLButton(_, pc, _, _)
-    importDeck("url", pc)
+	importDeck("url", pc)
 end
 
 function onLoadDeckNotebookButton(_, pc, _, _)
-    importDeck("notebook", pc)
+	importDeck("notebook", pc)
 end
 
 function onToggleAdvancedButton(_, _, _, _)
-    advanced = not advanced
-    drawUI()
+	advanced = not advanced
+	drawUI()
 end
 
 function UI_onCardBackInput(_, value, _)
-    cardBackInput = value
+	cardBackInput = value
 end
 
 function getCardBack()
-    if not cardBackInput or string.len(cardBackInput) == 0 then
-        return nil
-    else
-        return cardBackInput
-    end
-end
-
-function UI_onBlowCacheToggle(_, value, _)
-    blowCache = stringToBool(value)
-end
-
-function UI_onPNGGraphicsToggle(_, value, _)
-    pngGraphics = stringToBool(value)
+	if not cardBackInput or string.len(cardBackInput) == 0 then
+		return nil
+	else
+		return cardBackInput
+	end
 end
 
 function UI_onFaceDownToggle(_, value, _)
-    spawnEverythingFaceDown = stringToBool(value)
-end
-
-function UI_onSkipMaybeboardToggle(_, value, _)
-    skipMaybeboard = stringToBool(value)
+	spawnEverythingFaceDown = stringToBool(value)
 end
 
 function UI_onSkipSideboardToggle(_, value, _)
-    skipSideboard = stringToBool(value)
-end
-
-function UI_onSkipTokensToggle(_, value, _)
-    skipTokens = stringToBool(value)
+	skipSideboard = stringToBool(value)
 end
 
 -- ============================================================================
 -- LIFECYCLE
 -- ============================================================================
-local function setVersionInDescription(optionalExtraText)
-    local desc = self.getDescription() or ""
-    local versionLine = "[i]Version " .. tostring(ScriptVersion) .. (optionalExtraText and ("\n" .. optionalExtraText) or "") .. "[/i]"
-
-    local pattern = "%[i%]Version%s+%d+%.%d+%.%d+.-%[/i%]"
-
-    if desc:match(pattern) then
-        -- Replace existing version line
-        desc = desc:gsub(pattern, versionLine, 1)
-    else
-        -- No version present, add it to the top
-        if desc == "" then
-            desc = versionLine
-        else
-            desc = versionLine .. "\n" .. desc
-        end
-    end
-
-    self.setDescription(desc)
-end
-
 function onLoad(script_state)
-    self.setName("[00B4FF]MTG Deck Loader[-] [EF8B06]DX[-]")
-    setVersionInDescription("Type !reloadimporter and/or reload this object if the importer is stuck.\n")
-
-    --pi checkCurrentVersion(script_state)
-    self.setVar("updateFinished", true) --pi
-
-    drawUI()
+	self.setName("Riftbound Deck Loader")
+	self.setVar("updateFinished", true)
+	drawUI()
 end
 
 -- ============================================================================
--- json.lua
+-- json.lua  (MIT, rxi — https://github.com/rxi/json.lua)
 -- ============================================================================
 
 json = (function()
@@ -1520,7 +902,6 @@ json = (function()
 -- LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 -- OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 -- SOFTWARE.
-
 
 local json = { _version = "0.1.2" }
 

@@ -134,6 +134,14 @@ Unknown purpose — do not remove until identified.
 Objects kept in the mod but requiring content changes before the table is
 Riftbound-native.
 
+### Finished rewrites
+
+Components fully rewritten for Riftbound and no longer pending migration.
+
+| GUID | Object |
+|------|--------|
+| c91a72, f4d8be | Riftbound Deck Loader ×2 — completely overhauled for Riftbound (legacy GUIDs: 5aebeb, 3ede22) |
+
 ### Keyword tokens
 
 MTG keyword tokens (Defender, Flying, Hexproof, etc.). Keep the infinite bag
@@ -164,7 +172,6 @@ Two full sets (one per table half).
 
 | GUID | Object |
 |------|--------|
-| 5aebeb, 3ede22 | MTG Deck Loader DX ×2 — replace with Riftseer-backed importer |
 | 5006a4 | Deck Lister |
 
 ### πKeywords (ae12d3)
