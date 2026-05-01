@@ -141,6 +141,7 @@ Components fully rewritten for Riftbound and no longer pending migration.
 | GUID | Object |
 |------|--------|
 | c91a72, f4d8be | Riftbound Deck Loader ×2 — completely overhauled for Riftbound (legacy GUIDs: 5aebeb, 3ede22) |
+| 7ae211/be93f0, daebb2/8e1f05, b991d5/a90926, 887dd2/63e4e1, 52e44b/a7dc6e, 389c4d/2c49c6 (set 1) + 4783af, cdbccc, 220d2f, 1c4a59, aeeb11, cd8bb6 (set 2) | Domain Counter bags ×12 — retextured and relabeled from MTG mana colours to Riftbound domains: Calm, Body, Fury, Chaos, Mind, Order |
 
 ### Keyword tokens
 
@@ -156,17 +157,13 @@ Two full sets (one per table half).
 | Indestructible, Lifelink, Menace, Monstrous, Reach, Trample, Vigilance |
 | Goaded, Frozen |
 
-### Mana / resource counters
-
-MTG mana counters (Blue, Green, Red, etc.) and Suspend counters. Retexture
-and relabel for Riftbound resource or status counters.
+### Resource counters
 
 Two full sets (one per table half).
 
 | Objects |
 |---------|
-| Blue, Green, Red, Black, White, Colorless Mana Counter ×2 sets |
-| Suspend Counter ×2 sets |
+| Suspend Counter ×2 sets — still labelled as MTG suspend; retexture/relabel for Riftbound if needed |
 
 ### Deck importer
 

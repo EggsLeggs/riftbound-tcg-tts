@@ -5394,7 +5394,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Blue Mana Counter",
+      "Nickname": "Calm Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -5426,7 +5426,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348797242/11215D6E4045ED7CD070E3E36D7CEEC9FB6E5544/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14069352419300611664/5E5BB1443A44DC9079C40BCCB5FC35E1B85A020B/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -5462,7 +5462,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Blue Mana Counter",
+          "Nickname": "Calm Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -5491,7 +5491,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348797242/11215D6E4045ED7CD070E3E36D7CEEC9FB6E5544/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14069352419300611664/5E5BB1443A44DC9079C40BCCB5FC35E1B85A020B/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -5529,7 +5529,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Green Mana Counter",
+      "Nickname": "Body Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -5561,7 +5561,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348798627/450846CE8D2381335CA3C6C331254F01FA7DB35A/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14863824625908941322/CBA3F19B450DAC6DFE8F3CAFF10DBCCED392ECC8/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -5597,7 +5597,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Green Mana Counter",
+          "Nickname": "Body Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -5626,7 +5626,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348798627/450846CE8D2381335CA3C6C331254F01FA7DB35A/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14863824625908941322/CBA3F19B450DAC6DFE8F3CAFF10DBCCED392ECC8/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -5664,7 +5664,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Red Mana Counter",
+      "Nickname": "Fury Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -5696,7 +5696,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348799903/0DAD257B09666EB464547E42424A6396EC92F339/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11748683537942576820/A2F9326D9F73222E32FF73ECA0EBE297D5BBC21C/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -5732,7 +5732,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Red Mana Counter",
+          "Nickname": "Fury Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -5761,7 +5761,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348799903/0DAD257B09666EB464547E42424A6396EC92F339/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11748683537942576820/A2F9326D9F73222E32FF73ECA0EBE297D5BBC21C/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -5799,7 +5799,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Black Mana Counter",
+      "Nickname": "Chaos Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -5831,7 +5831,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348791608/302251C9B4A79D0680A3185FFB8CF035403D0E5F/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/9876975138474168821/DFC6A6D2C48FD08521D8E249C75C1AD7A399A1B2/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -5867,7 +5867,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Black Mana Counter",
+          "Nickname": "Chaos Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -5896,7 +5896,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348791608/302251C9B4A79D0680A3185FFB8CF035403D0E5F/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/9876975138474168821/DFC6A6D2C48FD08521D8E249C75C1AD7A399A1B2/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -5934,7 +5934,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Colorless Mana Counter",
+      "Nickname": "Mind Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -5966,7 +5966,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348220884/96DEB548BE5964DC43825DA1B3EB3F9E52456D56/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/13628296174604500350/D29FED0F996A37DD97F40BDAD2CC56F0BD785EDE/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -6002,7 +6002,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Colorless Mana Counter",
+          "Nickname": "Mind Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -6031,7 +6031,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348220884/96DEB548BE5964DC43825DA1B3EB3F9E52456D56/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/13628296174604500350/D29FED0F996A37DD97F40BDAD2CC56F0BD785EDE/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -6069,7 +6069,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "White Mana Counter",
+      "Nickname": "Order Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -6101,7 +6101,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348812263/6E31ACF3847493061CE815FBE560A7B55E78F847/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11163423732650510021/7368627C5F6FC90E8DE5150C327A43243A917644/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -6137,7 +6137,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "White Mana Counter",
+          "Nickname": "Order Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -6166,7 +6166,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348812263/6E31ACF3847493061CE815FBE560A7B55E78F847/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11163423732650510021/7368627C5F6FC90E8DE5150C327A43243A917644/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -8828,7 +8828,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Green Mana Counter",
+      "Nickname": "Body Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -8860,7 +8860,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348798627/450846CE8D2381335CA3C6C331254F01FA7DB35A/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14863824625908941322/CBA3F19B450DAC6DFE8F3CAFF10DBCCED392ECC8/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -8896,7 +8896,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Green Mana Counter",
+          "Nickname": "Body Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -8925,7 +8925,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348798627/450846CE8D2381335CA3C6C331254F01FA7DB35A/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14863824625908941322/CBA3F19B450DAC6DFE8F3CAFF10DBCCED392ECC8/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -8963,7 +8963,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Red Mana Counter",
+      "Nickname": "Fury Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -8995,7 +8995,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348799903/0DAD257B09666EB464547E42424A6396EC92F339/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11748683537942576820/A2F9326D9F73222E32FF73ECA0EBE297D5BBC21C/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -9031,7 +9031,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Red Mana Counter",
+          "Nickname": "Fury Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -9060,7 +9060,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348799903/0DAD257B09666EB464547E42424A6396EC92F339/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11748683537942576820/A2F9326D9F73222E32FF73ECA0EBE297D5BBC21C/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -9098,7 +9098,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Black Mana Counter",
+      "Nickname": "Chaos Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -9130,7 +9130,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348791608/302251C9B4A79D0680A3185FFB8CF035403D0E5F/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/9876975138474168821/DFC6A6D2C48FD08521D8E249C75C1AD7A399A1B2/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -9166,7 +9166,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Black Mana Counter",
+          "Nickname": "Chaos Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -9195,7 +9195,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348791608/302251C9B4A79D0680A3185FFB8CF035403D0E5F/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/9876975138474168821/DFC6A6D2C48FD08521D8E249C75C1AD7A399A1B2/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -9233,7 +9233,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Colorless Mana Counter",
+      "Nickname": "Mind Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -9265,7 +9265,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348220884/96DEB548BE5964DC43825DA1B3EB3F9E52456D56/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/13628296174604500350/D29FED0F996A37DD97F40BDAD2CC56F0BD785EDE/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -9301,7 +9301,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Colorless Mana Counter",
+          "Nickname": "Mind Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -9330,7 +9330,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348220884/96DEB548BE5964DC43825DA1B3EB3F9E52456D56/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/13628296174604500350/D29FED0F996A37DD97F40BDAD2CC56F0BD785EDE/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -9477,7 +9477,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "Blue Mana Counter",
+      "Nickname": "Calm Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -9509,7 +9509,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348797242/11215D6E4045ED7CD070E3E36D7CEEC9FB6E5544/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14069352419300611664/5E5BB1443A44DC9079C40BCCB5FC35E1B85A020B/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -9545,7 +9545,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "Blue Mana Counter",
+          "Nickname": "Calm Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -9574,7 +9574,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348797242/11215D6E4045ED7CD070E3E36D7CEEC9FB6E5544/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/14069352419300611664/5E5BB1443A44DC9079C40BCCB5FC35E1B85A020B/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
@@ -10088,7 +10088,7 @@
         "scaleY": 1.19999981,
         "scaleZ": 1.19999981
       },
-      "Nickname": "White Mana Counter",
+      "Nickname": "Order Domain Counter",
       "Description": "",
       "GMNotes": "",
       "Memo": "",
@@ -10120,7 +10120,7 @@
       "MeshIndex": -1,
       "CustomMesh": {
         "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348812263/6E31ACF3847493061CE815FBE560A7B55E78F847/",
+        "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11163423732650510021/7368627C5F6FC90E8DE5150C327A43243A917644/",
         "NormalURL": "",
         "ColliderURL": "",
         "Convex": true,
@@ -10156,7 +10156,7 @@
             "scaleY": 0.9750001,
             "scaleZ": 0.9750001
           },
-          "Nickname": "White Mana Counter",
+          "Nickname": "Order Domain Counter",
           "Description": "",
           "GMNotes": "",
           "AltLookAngle": {
@@ -10185,7 +10185,7 @@
           "Hands": false,
           "CustomMesh": {
             "MeshURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348216858/13BEB07D15ABA51C725265DF239ED4F84D3A872C/",
-            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/1646593629348812263/6E31ACF3847493061CE815FBE560A7B55E78F847/",
+            "DiffuseURL": "https://steamusercontent-a.akamaihd.net/ugc/11163423732650510021/7368627C5F6FC90E8DE5150C327A43243A917644/",
             "NormalURL": "",
             "ColliderURL": "",
             "Convex": true,
