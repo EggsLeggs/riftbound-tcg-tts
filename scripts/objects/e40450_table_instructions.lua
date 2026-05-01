@@ -23,7 +23,7 @@ end
 
 function closeSelf(obj,ply)
 
-  unnecessaryStuff={"fc40c8","b7ccfb","633ed3","de6cde","9cf532","32f398","e7428d",
+  unnecessaryStuff={"fc40c8","b7ccfb","cafe02","de6cde","9cf532","32f398","e7428d",
   "1a20bf","9360fc","0a79c7","792837","163a5f","63bc71","e0d9cc","917dc3","f62d00",
   "82e64d","0cebc6","59d2ee","080e23","d658b5","cbcbea","fcd8d9","c3ca32","b8b9ed",
   "c36338","721b69","8764e9","28297f","b41ace","220d2f","1c4a59","aeeb11","2e1ed6",
@@ -50,9 +50,14 @@ function closeSelf(obj,ply)
     end
 
     for _,guid in pairs(moveThese) do
-      pos=getObjectFromGUID(guid).getPosition()
-      pos[1]=pos[1]-3
-      getObjectFromGUID(guid).setPosition(pos)
+      pcall(function()
+        local obj=getObjectFromGUID(guid)
+        if obj then
+          pos=obj.getPosition()
+          pos[1]=pos[1]-3
+          obj.setPosition(pos)
+        end
+      end)
     end
 
   -- end

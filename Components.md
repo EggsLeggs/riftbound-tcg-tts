@@ -78,7 +78,7 @@ Invisible TTS objects that define hand zones and scripting regions.
 | GUID | Object | Note |
 |------|--------|------|
 | b653d2, 05b07c | Turn Skipper Puck ×2 | |
-| aea3f4, 633ed3 | Turn Order card ×2 | |
+| cafe01, cafe02 | Turn Order card ×2 | Updated for Riftbound (new face/back art, unlocked; legacy GUIDs: aea3f4, 633ed3) |
 | dc2d88 | Smart Mulligan | |
 | 0ae315 | 4p playmat enabler | Chat command: `playmat <url>` / `playmat none` — game-agnostic |
 
