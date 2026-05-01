@@ -8,6 +8,11 @@ This is a work in progress. Reskinning a mature MTG mod into a Riftbound-native
 table — different zones, different counters, deck importer pointed at Riftseer
 instead of Scryfall, no mana bags, etc.
 
+## Workshop Items
+
+- Riftbound Importer Toolkit (ID `3717685169`):
+  [https://steamcommunity.com/sharedfiles/filedetails/?id=3717685169](https://steamcommunity.com/sharedfiles/filedetails/?id=3717685169)
+
 ## Credits
 
 The original mod is the work of several authors over five years. None of the

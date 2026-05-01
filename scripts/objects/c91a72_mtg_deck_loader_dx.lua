@@ -1,5 +1,5 @@
 --[[
-"Infinite 'Bag' MTG Deck Loader DX" by DXHHH101
+"Infinite 'Bag' Riftbound Deck Loader" by DXHHH101
 
 This is an infinite "bag" that will attempt to update its own code.
 After it does so (if it needs to), it will attempt to let the
@@ -28,7 +28,7 @@ local function isNewerVersion(r,l)
 end
 
 local function installUpdate(newVersion)
-	--print('[33ff33]Installing Upgrade to MTG Deck Loader DX ['..tostring(newVersion)..']')
+	--print('[33ff33]Installing Upgrade to Riftbound Deck Loader ['..tostring(newVersion)..']')
 	WebRequest.get('https://raw.githubusercontent.com/DXHHH101/TabletopSimulatorScripts/refs/heads/main/MTGImporter/InfiniteDeckloaderMat.lua' .. "?t=" .. tostring(os.time()), function(res)
         if (not(res.is_error)) then
             local state = {}
@@ -131,7 +131,7 @@ local function patchFirstPulledObject()
             local cancelWait = false
             obj.setLock(true)
 
-            self.setName("[00B4FF]MTG Deck Loader[-] [EF8B06]DX[-]")
+            self.setName("[00B4FF]Riftbound Deck Loader[-] [EF8B06]DX[-]")
 
             Wait.frames(function()
                 self.setDescription(obj.getDescription())
@@ -180,7 +180,7 @@ local function patchFirstPulledObject()
                 function()
                     local newObjectRef = getObjectFromGUID(objGUID)
                     if newObjectRef and not newObjectRef.isDestroyed() then
-                        self.setName("[00B4FF]MTG Deck Loader[-] [EF8B06]DX[-]")
+                        self.setName("[00B4FF]Riftbound Deck Loader[-] [EF8B06]DX[-]")
                         newObjectRef.destruct()
                     end
                 end

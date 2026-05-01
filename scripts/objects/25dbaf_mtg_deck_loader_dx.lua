@@ -1,6 +1,6 @@
 --[[
 "Riftbound Deck Loader"
-Originally based on "MTG Deck Loader DX" by DXHHH101
+Originally based on "Riftbound Deck Loader" by DXHHH101
 (https://github.com/DXHHH101/TabletopSimulatorScripts/tree/main/MTGImporter)
 Credit to Omes and Amuzet for the original importer architecture.
 
