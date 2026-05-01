@@ -130,6 +130,24 @@ python3 tools/inject.py
 
 This rewrites `mod/Riftbound.json` using the current `.lua` and `.xml` files.
 
+## Future plans
+
+### Re-adding keyword token bags
+
+The status keyword token bags (Defender, Deathtouch, Double Strike, First Strike, Flying, Frozen, Goaded, Haste, Hexproof, Indestructible, Lifelink, Menace, Monstrous, Reach, Trample, Vigilance — two full sets, 32 bags total) were removed from the table in commit `189ce6d`-era cleanup. Their GUIDs are preserved in the `unnecessaryStuff` list in `scripts/objects/e40450_table_instructions.lua`.
+
+To re-add them once Riftbound's keyword set is known:
+
+1. Open TTS and load the Riftbound save.
+2. Spawn new infinite-bag + token pairs via the TTS object menu, one per keyword. Position them on the table.
+3. Save the mod in TTS (in-game save menu) — the JSON updates via the symlink.
+4. Run `python3 tools/extract.py` to regenerate `scripts/`.
+5. Update `unnecessaryStuff` in `scripts/objects/e40450_table_instructions.lua` with the new GUIDs (remove old stale ones, add new ones).
+6. Update `Components.md` to document the new objects.
+7. Run `python3 tools/inject.py` and commit everything.
+
+The πKeywords reference popup (GUID `ae12d3`, script `scripts/objects/ae12d3_keywords.lua`) is still in the mod and will also need its keyword list and definitions updated to match Riftbound's keyword set at that time.
+
 ## License
 
 The original mod has no explicit license. This fork is published in the same
