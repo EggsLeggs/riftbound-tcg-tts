@@ -165,12 +165,6 @@ Two full sets (one per table half).
 |---------|
 | Suspend Counter ×2 sets — still labelled as MTG suspend; retexture/relabel for Riftbound if needed |
 
-### Deck importer
-
-| GUID | Object |
-|------|--------|
-| 5006a4 | Deck Lister |
-
 ### πKeywords (ae12d3)
 
 TyrantNomad keyword reference popup. Currently shows MTG keyword definitions

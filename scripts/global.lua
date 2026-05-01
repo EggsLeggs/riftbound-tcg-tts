@@ -1342,9 +1342,8 @@ function sortHands(ply)
 
     if noCMCs then
       Player[ply].broadcast('No CMC info found in the card names or description.\n'..
-          'You could use the Deck Lister to reimport your deck with the necessary info,\n'..
-          'Or the Deck Data Fetcher to download and port the info directly onto your deck.',{0.7,0.7,0.7})
-      local pingGUIDs={'6d07c3','5006a4','6d46cd','6ed442'}
+          'You could use the Deck Data Fetcher to download and port the info directly onto your deck.',{0.7,0.7,0.7})
+      local pingGUIDs={'6d07c3','6d46cd','6ed442'}
       for i,guid in ipairs(pingGUIDs) do
         if getObjectFromGUID(guid)~=nil then
           Player[ply].pingTable(getObjectFromGUID(guid).getPosition())
@@ -1584,9 +1583,8 @@ function cascade(deck,playerColor,CMC)
     cmc=getCMC(card.nickname,card.description)
     if cmc==nil then
       Player[playerColor].broadcast("Cards without CMC in their TTS name detected.\n"..
-                            'You could use the Deck Lister to reimport your deck with the necessary info,\n'..
-                            'Or the Deck Data Fetcher to download and port the info directly onto your deck.',{0.7,0.7,0.7})
-      local pingGUIDs={'6d07c3','5006a4','6d46cd','6ed442'}
+                            'You could use the Deck Data Fetcher to download and port the info directly onto your deck.',{0.7,0.7,0.7})
+      local pingGUIDs={'6d07c3','6d46cd','6ed442'}
       for i,guid in ipairs(pingGUIDs) do
         if getObjectFromGUID(guid)~=nil then
           Player[playerColor].pingTable(getObjectFromGUID(guid).getPosition())
